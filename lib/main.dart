@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
@@ -13,11 +14,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Flutter Firebase Auth',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'Flutter Firebase Auth'),
     );
   }
 }
@@ -32,12 +33,87 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  FirebaseAuth auth = FirebaseAuth.instance;
 
-  void _incrementCounter() {
+  bool isLoading = false;
+  User? user;
+
+  Future<void> register() async {
     setState(() {
-      _counter++;
+      isLoading = true;
     });
+
+    try {
+      final response = await auth.createUserWithEmailAndPassword(
+        email: 'carlo@gmail.com',
+        password: 'password',
+      );
+      // SUCCESS
+      print('SUCCESS');
+
+      print(response.user);
+    } catch (e) {
+      print('ERROR');
+      print('Unable to login');
+      // FAIL
+    } finally {
+      print('FINALLY');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> login() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // CTRL + SHIFT + I
+      final response = await auth.signInWithEmailAndPassword(
+        email: 'carlo@gmail.com',
+        password: 'password',
+      );
+
+      print(response.user);
+
+      setState(() {
+        user = response.user;
+      });
+    } catch (e) {
+      print('ERROR');
+      print('Unable to login');
+      // FAIL
+    } finally {
+      print('FINALLY');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  // async/await
+  Future<void> signOut() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      await auth.signOut();
+
+      setState(() {
+        user = null;
+      });
+    } catch (e) {
+      print('ERROR');
+      // FAIL
+    } finally {
+      print('FINALLY');
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
@@ -50,18 +126,33 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
+            Text('Flutter Authentication'),
+            if (isLoading) CircularProgressIndicator(),
+            MaterialButton(
+              onPressed: () => register(),
+              child: Text('Register'),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+            MaterialButton(
+              onPressed: () => login(),
+              child: Text('Login'),
+            ),
+            user != null
+                ? Text(
+                    user!.email ?? 'User Email is empty',
+                    style: TextStyle(
+                      fontSize: 24,
+                    ),
+                  )
+                : SizedBox.shrink(),
+            MaterialButton(
+              onPressed: () => signOut(),
+              child: Text('Sign Out'),
             ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
+        onPressed: () {},
         tooltip: 'Increment',
         child: Icon(Icons.add),
       ),
